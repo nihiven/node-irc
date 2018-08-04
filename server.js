@@ -1,13 +1,13 @@
 const net = require('net');
 const to = require('to2');
-const find = require('array-find')
+const {debuglog} = require('util');
 const each = require('each-async')
 const User = require('./user')
 const Channel = require('./channel');
 const Message = require('./message');
 const commands = require('./commands');
 
-const debug = require('debug')('ircs:Server')
+const debug = debuglog('ircs:Server')
 
 /**
  * Represents a single IRC server.
@@ -37,10 +37,9 @@ class Server extends net.Server {
     this.channels = new Map();
     this.hostname = options.hostname || 'localhost';
     this.on('connection', sock => {
-      debug('incoming connection', sock.remoteAddress)
-      const user = new User(sock)
-      this.emit('user', user);
+      const user = new User(sock);
       this.users.push(user);
+      this.emit('user', user);
     });
 
     this.on('user', user => {
@@ -72,7 +71,9 @@ class Server extends net.Server {
    */
   findUser (nickname) {
     nickname = normalize(nickname)
-    return find(this.users, user => normalize(user.nickname) === nickname)
+    for(const user of this.users){
+      if(normalize(user.nickname) === nickname) return user;
+    }
   }
 
   /**
