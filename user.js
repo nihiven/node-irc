@@ -2,7 +2,7 @@ const to = require('to2');
 const {debuglog} = require('util');
 const Parser = require('./parser');
 const Message = require('./message');
-const { Duplex } = require('readable-stream');
+const { Duplex } = require('stream');
 
 const debug = debuglog('ircs:User');
 /**
