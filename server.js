@@ -1,8 +1,8 @@
 const net = require('net');
 const to = require('to2');
 const {debuglog} = require('util');
-const each = require('each-async')
-const User = require('./user')
+const each = require('each-async');
+const User = require('./user');
 const Channel = require('./channel');
 const Message = require('./message');
 const commands = require('./commands');
@@ -19,18 +19,18 @@ class Server extends net.Server {
    * @see Server
    * @return {Server}
    */
-  static createServer (options, connectionListener) {
-    return new Server(options, connectionListener)
+  static createServer (options, messageHandler) {
+    return new Server(options, messageHandler)
   }
 
   /**
    * Create an IRC server.
    *
    * @param {Object} options `net.Server` options.
-   * @param {function()} connectionListener `net.Server` connection listener.
+   * @param {function()} messageHandler `net.Server` connection listener.
    */
-  constructor (options = {}, connectionListener) {
-    super(options, connectionListener)
+  constructor (options = {}, messageHandler) {
+    super(options)
     this.users = [];
     this.middleware = [];
     this.created = new Date();
@@ -59,6 +59,10 @@ class Server extends net.Server {
       this.use(command, fn);
     }
 
+    if(messageHandler){
+      this.on('message', messageHandler);
+    }
+
     debug('server started')
   }
 
@@ -71,9 +75,7 @@ class Server extends net.Server {
    */
   findUser (nickname) {
     nickname = normalize(nickname)
-    for(const user of this.users){
-      if(normalize(user.nickname) === nickname) return user;
-    }
+    return this.users.find(user => normalize(user.nickname) === nickname);
   }
 
   /**
@@ -115,10 +117,8 @@ class Server extends net.Server {
    * @return {Channel} The Channel.
    */
   getChannel (channelName) {
-    if (!Channel.isValidChannelName(channelName)) {
-      return
-    }
-    return this.findChannel(channelName) || this.createChannel(channelName)
+    if (!Channel.isValidChannelName(channelName)) return;
+    return this.findChannel(channelName) || this.createChannel(channelName);
   }
 
   /**
